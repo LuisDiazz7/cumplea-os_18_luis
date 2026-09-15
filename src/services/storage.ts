@@ -28,6 +28,11 @@ export async function subirFoto(archivo: File): Promise<string> {
   return ruta
 }
 
+export async function eliminarFoto(ruta: string): Promise<void> {
+  const { error } = await supabase.storage.from(BUCKET_FOTOS).remove([ruta])
+  if (error) throw error
+}
+
 export async function getFotoUrl(ruta: string): Promise<string | null> {
   const enCache = cacheUrls.get(ruta)
   if (enCache && Date.now() < enCache.expira) return enCache.url

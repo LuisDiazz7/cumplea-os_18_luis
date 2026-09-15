@@ -30,6 +30,11 @@ export async function getInvitados(): Promise<Invitado[]> {
   return data ?? []
 }
 
+export async function eliminarInvitado(id: number): Promise<void> {
+  const { error } = await supabase.from('invitados').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function getInvitadoPorCodigo(codigoQr: string): Promise<Invitado | null> {
   const { data, error } = await supabase
     .from('invitados')

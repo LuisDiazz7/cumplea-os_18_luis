@@ -1,8 +1,14 @@
-import type { InvitadoConEntrada } from '../types/database'
+import { Trash2 } from 'lucide-react'
+import type { Invitado, InvitadoConEntrada } from '../types/database'
 import Avatar from './Avatar'
 import { formatearHora } from '../lib/format'
 
-export default function GuestCard({ dato }: { dato: InvitadoConEntrada }) {
+interface GuestCardProps {
+  dato: InvitadoConEntrada
+  onEliminar?: (invitado: Invitado) => void
+}
+
+export default function GuestCard({ dato, onEliminar }: GuestCardProps) {
   const { invitado, entrada, guardia } = dato
   const estaAdentro = entrada !== null
 
@@ -32,6 +38,18 @@ export default function GuestCard({ dato }: { dato: InvitadoConEntrada }) {
           </p>
         )}
       </div>
+
+      {onEliminar && (
+        <button
+          type="button"
+          className="tarjeta-invitado__eliminar"
+          onClick={() => onEliminar(invitado)}
+          aria-label={`Eliminar a ${invitado.nombre}`}
+          title="Eliminar invitado"
+        >
+          <Trash2 size={16} aria-hidden="true" />
+        </button>
+      )}
     </article>
   )
 }

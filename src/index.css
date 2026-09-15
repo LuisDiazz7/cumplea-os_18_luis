@@ -148,6 +148,17 @@ p {
   border-color: rgba(255, 255, 255, 0.24);
 }
 
+.btn--peligro {
+  background: var(--rojo);
+  color: #ffffff;
+  box-shadow: 0 10px 26px rgba(255, 92, 108, 0.3);
+}
+
+.btn--peligro:not(:disabled):hover {
+  filter: brightness(1.08);
+  box-shadow: 0 14px 32px rgba(255, 92, 108, 0.42);
+}
+
 .btn--ancho {
   width: 100%;
 }
@@ -893,6 +904,26 @@ p {
   white-space: nowrap;
 }
 
+.tarjeta-invitado__eliminar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 92, 108, 0.28);
+  background: rgba(255, 92, 108, 0.08);
+  color: rgba(255, 92, 108, 0.85);
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.tarjeta-invitado__eliminar:hover {
+  background: rgba(255, 92, 108, 0.16);
+  border-color: rgba(255, 92, 108, 0.5);
+  color: var(--rojo);
+}
+
 .vacio {
   text-align: center;
   padding: 48px 20px;
@@ -1111,6 +1142,128 @@ p {
 
 .resultado .btn--ancho {
   max-width: 320px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal__fondo {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: aparecer 0.2s ease both;
+}
+
+.modal__caja {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 24px 24px;
+  border-radius: 24px;
+  background:
+    radial-gradient(280px 140px at 50% -16%, rgba(255, 92, 108, 0.14), transparent 65%),
+    var(--fondo-2);
+  border: 1px solid rgba(255, 92, 108, 0.22);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  animation: aparecer 0.28s ease both;
+}
+
+.modal__cerrar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--borde);
+  background: var(--superficie);
+  color: var(--texto-bajo);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.modal__cerrar:hover {
+  background: var(--superficie-fuerte);
+  color: var(--texto);
+}
+
+.modal__icono {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  background: rgba(255, 92, 108, 0.12);
+  border: 1px solid rgba(255, 92, 108, 0.35);
+  color: var(--rojo);
+}
+
+.modal__titulo {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.modal__texto {
+  margin-top: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--texto-bajo);
+}
+
+.modal__acciones {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.modal__acciones .btn {
+  flex: 1;
+  padding: 14px 10px;
+  font-size: 14px;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 60;
+  width: calc(100% - 36px);
+  max-width: 400px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  animation: aparecer 0.25s ease both;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.45);
+}
+
+.toast--ok {
+  background: rgba(18, 40, 30, 0.95);
+  border: 1px solid rgba(53, 208, 127, 0.5);
+  color: #a7f0c8;
+}
+
+.toast--error {
+  background: rgba(40, 18, 22, 0.95);
+  border: 1px solid rgba(255, 92, 108, 0.5);
+  color: #ffb3bb;
 }
 
 .confirmacion {

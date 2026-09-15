@@ -1,21 +1,34 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Camera, LogOut, Search } from 'lucide-react'
 import { useGuard } from '../hooks/useGuard'
 import { useRealtimeGuests } from '../hooks/useRealtimeGuests'
+import { eliminarInvitado } from '../services/guests'
+import { eliminarFoto } from '../services/storage'
+import { mensajeUsuario } from '../lib/errors'
 import StatCard from '../components/StatCard'
 import GuestCard from '../components/GuestCard'
+import ConfirmarEliminacion from '../components/ConfirmarEliminacion'
 import LoadingScreen from '../components/LoadingScreen'
+import type { Invitado } from '../types/database'
 
 type Filtro = 'todos' | 'pendientes' | 'ingresaron'
+
+interface Feedback {
+  tipo: 'ok' | 'error'
+  texto: string
+}
 
 export default function GuardDashboard() {
   const { guardia, signOut } = useGuard()
   const navigate = useNavigate()
-  const { invitados, cargando, error } = useRealtimeGuests()
+  const { invitados, cargando, error, quitarInvitadoLocal } = useRealtimeGuests()
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<Filtro>('todos')
+  const [invitadoAEliminar, setInvitadoAEliminar] = useState<Invitado | null>(null)
+  const [eliminando, setEliminando] = useState(false)
+  const [feedback, setFeedback] = useState<Feedback | null>(null)
 
   const total = invitados.length
   const ingresaron = invitados.filter((g) => g.entrada).length
@@ -39,6 +52,41 @@ export default function GuardDashboard() {
   function manejarBusqueda(e: ChangeEvent<HTMLInputElement>) {
     setBusqueda(e.target.value)
   }
+
+  const confirmarEliminacion = useCallback(async () => {
+    if (!invitadoAEliminar) return
+    const invitado = invitadoAEliminar
+
+    setEliminando(true)
+    setFeedback(null)
+
+    try {
+      await eliminarInvitado(invitado.id)
+      if (invitado.foto) {
+        try {
+          await eliminarFoto(invitado.foto)
+        } catch (e) {
+          console.warn('[Eliminar][AVISO] No se pudo borrar la foto del storage:', e)
+        }
+      }
+      quitarInvitadoLocal(invitado.id)
+      setFeedback({ tipo: 'ok', texto: `Invitado "${invitado.nombre}" eliminado.` })
+    } catch (e) {
+      console.error('[Eliminar][ERROR] No se pudo eliminar al invitado:', e)
+      setFeedback({
+        tipo: 'error',
+        texto: mensajeUsuario(e, 'No se pudo eliminar al invitado. Inténtalo de nuevo.'),
+      })
+    } finally {
+      setEliminando(false)
+      setInvitadoAEliminar(null)
+    }
+  }, [invitadoAEliminar, quitarInvitadoLocal])
+
+  const cancelarEliminacion = useCallback(() => {
+    if (eliminando) return
+    setInvitadoAEliminar(null)
+  }, [eliminando])
 
   if (cargando) return <LoadingScreen etiqueta="Cargando invitados..." />
 
@@ -123,12 +171,27 @@ export default function GuardDashboard() {
           <ul className="lista-invitados" aria-label="Lista de invitados">
             {filtrados.map((dato) => (
               <li key={dato.invitado.id}>
-                <GuestCard dato={dato} />
+                <GuestCard dato={dato} onEliminar={setInvitadoAEliminar} />
               </li>
             ))}
           </ul>
         )}
       </main>
+
+      {feedback && (
+        <div className={`toast toast--${feedback.tipo}`} role="status" aria-live="polite">
+          {feedback.texto}
+        </div>
+      )}
+
+      {invitadoAEliminar && (
+        <ConfirmarEliminacion
+          invitado={invitadoAEliminar}
+          eliminando={eliminando}
+          onCancelar={cancelarEliminacion}
+          onConfirmar={confirmarEliminacion}
+        />
+      )}
     </div>
   )
 }

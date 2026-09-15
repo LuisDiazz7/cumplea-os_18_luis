@@ -9,6 +9,7 @@ export interface UseRealtimeGuestsResult {
   invitados: InvitadoConEntrada[]
   cargando: boolean
   error: string | null
+  quitarInvitadoLocal: (id: number) => void
 }
 
 export function useRealtimeGuests(): UseRealtimeGuestsResult {
@@ -17,6 +18,11 @@ export function useRealtimeGuests(): UseRealtimeGuestsResult {
   const [guardias, setGuardias] = useState<Guardia[]>([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const quitarInvitadoLocal = (id: number) => {
+    setInvitados((prev) => prev.filter((g) => g.id !== id))
+    setEntradas((prev) => prev.filter((e) => e.invitado_id !== id))
+  }
 
   useEffect(() => {
     let activo = true
@@ -54,6 +60,22 @@ export function useRealtimeGuests(): UseRealtimeGuestsResult {
           if (activo) setEntradas((prev) => [nueva, ...prev])
         },
       )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'invitados' },
+        (payloadRaw) => {
+          const anterior = payloadRaw.old as Invitado
+          if (activo) quitarInvitadoLocal(anterior.id)
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'entradas' },
+        (payloadRaw) => {
+          const anterior = payloadRaw.old as Entrada
+          if (activo) setEntradas((prev) => prev.filter((e) => e.id !== anterior.id))
+        },
+      )
       .subscribe()
 
     return () => {
@@ -70,5 +92,5 @@ export function useRealtimeGuests(): UseRealtimeGuestsResult {
     })
   }, [invitados, entradas, guardias])
 
-  return { invitados: invitadosConEntrada, cargando, error }
+  return { invitados: invitadosConEntrada, cargando, error, quitarInvitadoLocal }
 }
