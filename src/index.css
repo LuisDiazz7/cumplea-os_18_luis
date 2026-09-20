@@ -597,6 +597,10 @@ p {
   overflow-x: hidden;
 }
 
+.qr-invitacion {
+  background: var(--fondo);
+}
+
 .qr-perfil {
   position: relative;
   display: flex;
