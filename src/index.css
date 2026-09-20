@@ -677,34 +677,43 @@ p {
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding: 26px 20px 40px;
+  padding: 14px 0 40px;
 }
 
 .qr-seccion__card {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 12px;
   width: 100%;
-  max-width: 360px;
-  margin: 0 auto;
-  padding: 24px;
-  border-radius: 24px;
-  background: var(--fondo-2);
+  max-width: 430px;
+  margin-left: auto;
+  margin-right: auto;
+  height: auto;
+  min-height: 0;
+  padding: 20px 24px;
+  border-radius: 34px;
   border: 1px solid var(--borde);
+  background:
+    radial-gradient(420px 260px at 80% -12%, rgba(212, 175, 55, 0.14), transparent 62%),
+    radial-gradient(380px 240px at 8% 115%, rgba(212, 175, 55, 0.08), transparent 58%),
+    #0b0b0b;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .qr-vista .qr-display {
   display: block;
-  width: min(65vw, 260px);
-  height: auto;
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 300px;
+  height: auto !important;
   aspect-ratio: 1 / 1;
+  object-fit: contain;
   border-radius: 12px;
 }
 
 .qr-seccion__nota {
-  margin-top: 16px;
+  margin-top: 0;
   font-size: 13px;
   color: var(--texto-bajo);
   text-align: center;
@@ -716,7 +725,8 @@ p {
   gap: 14px;
   width: 100%;
   max-width: 360px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   padding: 16px;
   border-radius: 18px;
   background: var(--superficie-fuerte);
@@ -755,7 +765,8 @@ p {
   gap: 12px;
   width: 100%;
   max-width: 360px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
   padding-top: 4px;
 }
 
