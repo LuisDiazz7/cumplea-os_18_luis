@@ -4,6 +4,8 @@ export function mensajeUsuario(error: unknown, fallback: string): string {
   switch (e.code) {
     case '23505':
       return 'Ese invitado ya ingresó.'
+    case '23503':
+      return 'No se pudo eliminar porque tiene registros asociados (entrada).'
     case '23514':
       return 'El nombre debe tener al menos 2 caracteres.'
     case '23502':

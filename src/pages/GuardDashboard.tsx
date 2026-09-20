@@ -62,17 +62,36 @@ export default function GuardDashboard() {
 
     try {
       await eliminarInvitado(invitado.id)
+      let notaFoto = ''
       if (invitado.foto) {
         try {
           await eliminarFoto(invitado.foto)
         } catch (e) {
-          console.warn('[Eliminar][AVISO] No se pudo borrar la foto del storage:', e)
+          const se = e as { message?: string; name?: string; statusCode?: number; cause?: unknown }
+          console.warn(
+            '[Eliminar][AVISO] No se pudo borrar la foto del storage:',
+            {
+              name: se.name,
+              message: se.message,
+              statusCode: se.statusCode,
+              cause: se.cause,
+              ruta: invitado.foto,
+            },
+          )
+          notaFoto = ' (la foto no se pudo borrar del almacenamiento)'
         }
       }
       quitarInvitadoLocal(invitado.id)
-      setFeedback({ tipo: 'ok', texto: `Invitado "${invitado.nombre}" eliminado.` })
+      setFeedback({ tipo: 'ok', texto: `Invitado "${invitado.nombre}" eliminado.${notaFoto}` })
     } catch (e) {
-      console.error('[Eliminar][ERROR] No se pudo eliminar al invitado:', e)
+      const se = e as { code?: string; message?: string; details?: string; hint?: string; name?: string }
+      console.error('[Eliminar][ERROR] No se pudo eliminar al invitado:', {
+        code: se.code,
+        message: se.message,
+        details: se.details,
+        hint: se.hint,
+        name: se.name,
+      })
       setFeedback({
         tipo: 'error',
         texto: mensajeUsuario(e, 'No se pudo eliminar al invitado. Inténtalo de nuevo.'),
