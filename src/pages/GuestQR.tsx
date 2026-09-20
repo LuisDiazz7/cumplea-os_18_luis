@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Cake } from 'lucide-react'
-import { toPng } from 'html-to-image'
+import { toPng, getFontEmbedCSS } from 'html-to-image'
 import QRCodeDisplay from '../components/QRCodeDisplay'
 import Avatar from '../components/Avatar'
 import type { Invitado } from '../types/database'
@@ -115,6 +115,10 @@ export default function GuestQR() {
       console.log('[guardar-invitacion] esperando fuentes')
       await document.fonts.ready
       console.log('[guardar-invitacion] fuentes listas')
+      const fontEmbedCSS = await getFontEmbedCSS(contenedor)
+      console.log('[guardar-invitacion] fuentes embebidas para exportación', {
+        longitud: fontEmbedCSS?.length ?? 0,
+      })
 
       console.log('[guardar-invitacion] esperando imágenes')
       const totalImagenes = await esperarImagenes(contenedor)
@@ -136,6 +140,11 @@ export default function GuestQR() {
       }
 
       console.log('[guardar-invitacion] generando PNG')
+      const rect = contenedor.getBoundingClientRect()
+      console.log('[guardar-invitacion] dimensiones reales del contenedor', {
+        ancho: rect.width,
+        alto: rect.height,
+      })
       let avatarRestauracion: { img: HTMLImageElement; src: string; loading: HTMLImageElement['loading'] } | null = null
       if (avatar && fotoDataUrl) {
         avatarRestauracion = { img: avatar, src: avatar.src, loading: avatar.loading }
@@ -147,9 +156,12 @@ export default function GuestQR() {
       let dataUrl: string
       try {
         dataUrl = await toPng(contenedor, {
+          width: rect.width,
+          height: rect.height,
           pixelRatio: 2,
           backgroundColor: '#080808',
           imagePlaceholder: PIXEL_TRANSPARENTE,
+          fontEmbedCSS,
         })
       } finally {
         if (avatarRestauracion) {
