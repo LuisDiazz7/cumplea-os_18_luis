@@ -675,6 +675,7 @@ p {
   font-size: 15px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
 }
 
 .qr-vista__contenido {

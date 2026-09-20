@@ -1,14 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { Cake } from 'lucide-react'
-import { toPng, getFontEmbedCSS } from 'html-to-image'
+import html2canvas from 'html2canvas'
 import QRCodeDisplay from '../components/QRCodeDisplay'
 import Avatar from '../components/Avatar'
 import type { Invitado } from '../types/database'
 
 const CLAVE_SESION = 'invitacion-luis-18'
-const PIXEL_TRANSPARENTE =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='
 
 function esperar(ms: number) {
   return new Promise<void>((resolver) => window.setTimeout(resolver, ms))
@@ -32,17 +30,17 @@ async function fotoParaCaptura(img: HTMLImageElement): Promise<string | null> {
     const fuente =
       'createImageBitmap' in window ? await createImageBitmap(blob) : await crearImagenDesdeBlob(blob)
 
-    const maxLado = 600
-    const escala = Math.min(1, maxLado / Math.max(fuente.width, fuente.height))
-    const ancho = Math.max(1, Math.round(fuente.width * escala))
-    const alto = Math.max(1, Math.round(fuente.height * escala))
+    const lado = Math.min(fuente.width, fuente.height)
+    const sx = Math.floor((fuente.width - lado) / 2)
+    const sy = Math.floor((fuente.height - lado) / 2)
+    const salida = Math.min(600, lado)
 
     const lienzo = document.createElement('canvas')
-    lienzo.width = ancho
-    lienzo.height = alto
+    lienzo.width = salida
+    lienzo.height = salida
     const ctx = lienzo.getContext('2d')
     if (!ctx) throw new Error('Sin contexto 2D')
-    ctx.drawImage(fuente, 0, 0, ancho, alto)
+    ctx.drawImage(fuente, sx, sy, lado, lado, 0, 0, salida, salida)
     if ('close' in fuente && typeof fuente.close === 'function') fuente.close()
 
     return lienzo.toDataURL('image/jpeg', 0.9)
@@ -83,6 +81,34 @@ function descargarPng(blob: Blob, nombre: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1500)
 }
 
+async function esperarFuentesDisponibles(msMaximo = 5000): Promise<boolean> {
+  const familias = ['Outfit', 'Playfair Display']
+  const inicio = Date.now()
+  const faltan = () => familias.some((familia) => !document.fonts.check(`16px ${familia}`))
+  while (Date.now() - inicio < msMaximo && faltan()) {
+    await esperar(150)
+  }
+  return !faltan()
+}
+
+const CARAS_FUENTE_INVITACION = [
+  { especificacion: '700 30px "Playfair Display"', elemento: '.qr-perfil__nombre' },
+  { especificacion: '700 12px Outfit', elemento: '.qr-perfil__invitado' },
+  { especificacion: '500 15px Outfit', elemento: '.qr-perfil__evento' },
+  { especificacion: '600 15px Outfit', elemento: '.qr-evento__titulo' },
+  { especificacion: '400 13px Outfit', elemento: '.qr-seccion__nota' },
+] as const
+
+async function cargarFuentesEspecificas(): Promise<string[]> {
+  const resultado = await Promise.allSettled(
+    CARAS_FUENTE_INVITACION.map(({ especificacion }) => document.fonts.load(especificacion)),
+  )
+  return CARAS_FUENTE_INVITACION.filter(({ especificacion }, i) => {
+    const cargada = resultado[i]?.status === 'fulfilled' && document.fonts.check(especificacion)
+    return cargada
+  }).map(({ especificacion }) => especificacion)
+}
+
 export default function GuestQR() {
   const invitacionRef = useRef<HTMLDivElement | null>(null)
   const [guardando, setGuardando] = useState(false)
@@ -114,11 +140,10 @@ export default function GuestQR() {
     try {
       console.log('[guardar-invitacion] esperando fuentes')
       await document.fonts.ready
-      console.log('[guardar-invitacion] fuentes listas')
-      const fontEmbedCSS = await getFontEmbedCSS(contenedor)
-      console.log('[guardar-invitacion] fuentes embebidas para exportación', {
-        longitud: fontEmbedCSS?.length ?? 0,
-      })
+      await esperarFuentesDisponibles()
+      const carasCargadas = await cargarFuentesEspecificas()
+      console.log('[guardar-invitacion] caras de fuente disponibles', { carasCargadas })
+      await document.fonts.ready
 
       console.log('[guardar-invitacion] esperando imágenes')
       const totalImagenes = await esperarImagenes(contenedor)
@@ -139,49 +164,68 @@ export default function GuestQR() {
         console.log('[guardar-invitacion] sin foto (avatar con iniciales)')
       }
 
-      console.log('[guardar-invitacion] generando PNG')
+      console.log('[guardar-invitacion] generando canvas (html2canvas)')
       const rect = contenedor.getBoundingClientRect()
-      console.log('[guardar-invitacion] dimensiones reales del contenedor', {
+      console.log('[guardar-invitacion] ancho real antes de capturar', {
         ancho: rect.width,
         alto: rect.height,
       })
-      let avatarRestauracion: { img: HTMLImageElement; src: string; loading: HTMLImageElement['loading'] } | null = null
-      if (avatar && fotoDataUrl) {
-        avatarRestauracion = { img: avatar, src: avatar.src, loading: avatar.loading }
-        avatar.src = fotoDataUrl
-        avatar.loading = 'eager'
-        await esperar(30)
-      }
+      const lienzo = await html2canvas(contenedor, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        imageTimeout: 10000,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        onclone: (_documentoClon, elementoClon) => {
+          elementoClon.style.width = `${rect.width}px`
+          elementoClon.style.maxWidth = `${rect.width}px`
+          elementoClon.style.minWidth = `${rect.width}px`
+          const perfil = elementoClon.querySelector<HTMLElement>('.qr-perfil')
+          if (perfil) perfil.style.animation = 'none'
+          if (fotoDataUrl) {
+            const imagenesPrefijo = '.qr-perfil__avatar '
+            const contenedorFoto = elementoClon.querySelector<HTMLElement>(
+              `${imagenesPrefijo}.qr-perfil__avatar`,
+            )
+            const img = elementoClon.querySelector<HTMLImageElement>(`${imagenesPrefijo}img`)
+            if (contenedorFoto) {
+              contenedorFoto.style.aspectRatio = '1 / 1'
+              contenedorFoto.style.overflow = 'hidden'
+              contenedorFoto.style.borderRadius = '50%'
+            }
+            if (img) {
+              img.src = fotoDataUrl
+              img.loading = 'eager'
+              img.style.width = '100%'
+              img.style.height = '100%'
+              img.style.objectFit = 'cover'
+              img.style.objectPosition = 'center'
+              img.style.borderRadius = '50%'
+              img.style.display = 'block'
+            }
+          }
+        },
+      })
 
-      let dataUrl: string
-      try {
-        dataUrl = await toPng(contenedor, {
-          width: rect.width,
-          height: rect.height,
-          pixelRatio: 2,
-          backgroundColor: '#080808',
-          imagePlaceholder: PIXEL_TRANSPARENTE,
-          fontEmbedCSS,
-        })
-      } finally {
-        if (avatarRestauracion) {
-          avatarRestauracion.img.src = avatarRestauracion.src
-          avatarRestauracion.img.loading = avatarRestauracion.loading
-          avatarRestauracion.img.srcset = ''
-        }
-      }
-      console.log('[guardar-invitacion] PNG generado', { longitud: dataUrl.length })
-
-      console.log('[guardar-invitacion] iniciando descarga')
-      const respuesta = await fetch(dataUrl)
-      const blob = await respuesta.blob()
+      const blob = await new Promise<Blob>((resolver, rechazar) => {
+        lienzo.toBlob((datos) => {
+          if (datos) resolver(datos)
+          else rechazar(new Error('toBlob no produjo un PNG'))
+        }, 'image/png')
+      })
 
       const limpio = invitado.nombre.replace(/[^a-zA-Z0-9-_ ]/g, '').trim().replace(/\s+/g, '-')
       const nombreArchivo = `invitacion-luis-${limpio || 'invitado'}.png`
 
       descargarPng(blob, nombreArchivo)
 
-      console.log('[guardar-invitacion] descarga terminada')
+      console.log('[guardar-invitacion] descarga terminada', {
+        bytes: blob.size,
+        nombre: nombreArchivo,
+      })
       setMensaje({ tipo: 'ok', texto: '¡Invitación guardada!' })
     } catch (error) {
       console.error('[guardar-invitacion][ERROR]', {
