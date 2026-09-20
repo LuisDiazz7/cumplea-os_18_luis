@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
+import { Cake } from 'lucide-react'
 import QRCodeDisplay from '../components/QRCodeDisplay'
+import Avatar from '../components/Avatar'
 import type { Invitado } from '../types/database'
 
 const CLAVE_SESION = 'invitacion-luis-18'
@@ -49,7 +51,7 @@ export default function GuestQR() {
       ctx.fillRect(0, 0, 1080, 1440)
 
       ctx.textAlign = 'center'
-      ctx.fillStyle = '#f4d488'
+      ctx.fillStyle = '#e8c766'
       ctx.font = '500 40px Outfit, sans-serif'
       ctx.fillText('CUMPLEAÑOS', 540, 160)
 
@@ -57,7 +59,7 @@ export default function GuestQR() {
       ctx.font = '700 110px "Playfair Display", serif'
       ctx.fillText('LUIS', 540, 320)
 
-      ctx.fillStyle = '#e6b94c'
+      ctx.fillStyle = '#d4af37'
       ctx.font = '700 170px "Playfair Display", serif'
       ctx.fillText('18', 540, 570)
 
@@ -98,34 +100,49 @@ export default function GuestQR() {
   }
 
   return (
-    <div className="pagina pagina--qr">
-      <main className="qr-contenedor">
-        <span className="qr-contenedor__medalla" aria-hidden="true">
-          ★ 18
-        </span>
-
-        <div className="qr-tarjeta">
-          <p className="qr-tarjeta__eyebrow">¡Estás invitado!</p>
-          <p className="qr-tarjeta__evento">
-            Luis <span className="qr-tarjeta__separador">—</span> 18
-          </p>
-          <h1 className="qr-tarjeta__nombre">{invitado.nombre}</h1>
-
-          <div className="qr-tarjeta__marco">
-            <QRCodeDisplay valor={invitado.codigo_qr} canvasRef={canvasRef} />
-          </div>
-
-          <p className="qr-tarjeta__nota">Presenta este código al llegar.</p>
+    <div className="qr-vista">
+      <header className="qr-perfil">
+        <div className="qr-perfil__avatar" aria-hidden="true">
+          <Avatar foto={invitado.foto} nombre={invitado.nombre} tamano={122} />
         </div>
+        <h1 className="qr-perfil__nombre">{invitado.nombre}</h1>
+        <p className="qr-perfil__invitado">¡Estás invitado!</p>
+        <p className="qr-perfil__evento">Cumpleaños Luis — 18</p>
+      </header>
 
-        {mensaje && <p className="mensaje mensaje--ok">{mensaje}</p>}
+      <main className="qr-vista__contenido">
+        <section className="qr-seccion" aria-label="Tu código QR">
+          <div className="qr-seccion__card">
+            <QRCodeDisplay valor={invitado.codigo_qr} canvasRef={canvasRef} />
+            <p className="qr-seccion__nota">Presenta este código al llegar.</p>
+          </div>
+        </section>
 
-        <button className="btn btn--primario btn--ancho" onClick={() => guardarTarjeta(invitado)} disabled={guardando}>
-          {guardando ? 'Guardando...' : 'GUARDAR QR'}
-        </button>
-        <Link to="/" className="btn btn--fantasma btn--ancho">
-          VOLVER AL INICIO
-        </Link>
+        <section className="qr-evento" aria-label="Información del evento">
+          <div className="qr-evento__card">
+            <span className="qr-evento__icono" aria-hidden="true">
+              <Cake size={22} />
+            </span>
+            <div className="qr-evento__texto">
+              <p className="qr-evento__titulo">Cumpleaños 18</p>
+              <p className="qr-evento__sub">Luis Díaz</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="qr-acciones" aria-label="Acciones">
+          {mensaje && <p className="mensaje mensaje--ok">{mensaje}</p>}
+          <button
+            className="btn btn--primario btn--ancho"
+            onClick={() => guardarTarjeta(invitado)}
+            disabled={guardando}
+          >
+            {guardando ? 'Guardando...' : 'GUARDAR QR'}
+          </button>
+          <Link to="/" className="btn btn--fantasma btn--ancho">
+            VOLVER AL INICIO
+          </Link>
+        </section>
       </main>
     </div>
   )

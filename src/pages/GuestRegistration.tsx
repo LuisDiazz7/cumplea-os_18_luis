@@ -54,17 +54,24 @@ export default function GuestRegistration() {
         try {
           rutaFoto = await subirFoto(foto)
         } catch (err) {
-          console.error('Error subiendo foto:', err)
-          setError(mensajeUsuario(err, 'No se pudo subir tu foto. Inténtalo de nuevo.'))
+          console.error('[crear-invitado] Falló la subida de la foto:', err)
+          setError(mensajeUsuario(err, 'No se pudo subir tu foto. Revisa la consola para el detalle e inténtalo de nuevo.'))
           setEnviando(false)
           return
         }
       }
 
-      const invitado = await crearInvitado(nombreLimpio, rutaFoto)
-      sessionStorage.setItem('invitacion-luis-18', JSON.stringify(invitado))
-      navigate('/invitado/qr', { replace: true })
+      try {
+        const invitado = await crearInvitado(nombreLimpio, rutaFoto)
+        sessionStorage.setItem('invitacion-luis-18', JSON.stringify(invitado))
+        navigate('/invitado/qr', { replace: true })
+      } catch (err) {
+        console.error('[crear-invitado] Falló crearInvitado: p_foto =', rutaFoto, err)
+        setError(mensajeUsuario(err, rutaFoto ? 'Tu foto se subió, pero no se pudo crear la invitación. Inténtalo de nuevo.' : 'No se pudo crear tu invitación. Inténtalo de nuevo.'))
+        setEnviando(false)
+      }
     } catch (err) {
+      console.error('[crear-invitado] Error inesperado al crear invitación:', err)
       setError(mensajeUsuario(err, 'No se pudo crear tu invitación. Inténtalo de nuevo.'))
       setEnviando(false)
     }
