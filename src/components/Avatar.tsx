@@ -1,30 +1,35 @@
 import { useEffect, useState } from 'react'
-import { getFotoUrl } from '../services/storage'
+import { getFotoUrl, getFotoUrlInvitado } from '../services/storage'
 import { iniciales } from '../lib/format'
 
 interface AvatarProps {
   foto: string | null
   nombre: string
   tamano?: number
+  codigoQr?: string | null
 }
 
-export default function Avatar({ foto, nombre, tamano = 52 }: AvatarProps) {
-  const [cargado, setCargado] = useState<{ foto: string; url: string | null } | null>(null)
+export default function Avatar({ foto, nombre, tamano = 52, codigoQr = null }: AvatarProps) {
+  const [cargado, setCargado] = useState<{ clave: string; url: string | null } | null>(null)
   const [fotoFallida, setFotoFallida] = useState<string | null>(null)
 
+  const clave = codigoQr ?? foto
+
   useEffect(() => {
-    if (!foto) return
+    if (!clave) return
     let activo = true
-    getFotoUrl(foto).then((url) => {
-      if (activo) setCargado({ foto, url })
+    const obtenerUrl = codigoQr ? getFotoUrlInvitado(codigoQr) : getFotoUrl(foto ?? '')
+    obtenerUrl.then((url) => {
+      if (!activo) return
+      setCargado({ clave, url })
     })
     return () => {
       activo = false
     }
-  }, [foto])
+  }, [clave, codigoQr, foto])
 
-  const url = cargado && cargado.foto === foto ? cargado.url : null
-  const mostrarImagen = url !== null && fotoFallida !== foto
+  const url = cargado && cargado.clave === clave ? cargado.url : null
+  const mostrarImagen = url !== null && fotoFallida !== clave
   const estilo = { width: tamano, height: tamano }
 
   if (mostrarImagen) {
@@ -35,7 +40,7 @@ export default function Avatar({ foto, nombre, tamano = 52 }: AvatarProps) {
         alt=""
         style={estilo}
         loading="lazy"
-        onError={() => setFotoFallida(foto)}
+        onError={() => setFotoFallida(clave)}
       />
     )
   }

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 export const BUCKET_FOTOS = 'fotos-invitados'
 
 const cacheUrls = new Map<string, { url: string; expira: number }>()
+const cacheUrlsInvitado = new Map<string, { url: string; expira: number }>()
 const TTL_CACHE = 55 * 60 * 1000
 
 const EXTENSIONES: Record<string, string> = {
@@ -110,4 +111,20 @@ export async function getFotoUrl(ruta: string): Promise<string | null> {
 
   cacheUrls.set(ruta, { url: data.signedUrl, expira: Date.now() + TTL_CACHE })
   return data.signedUrl
+}
+
+export async function getFotoUrlInvitado(codigoQr: string): Promise<string | null> {
+  const enCache = cacheUrlsInvitado.get(codigoQr)
+  if (enCache && Date.now() < enCache.expira) return enCache.url
+
+  const { data, error } = await supabase.functions.invoke<{ url?: string | null }>('foto-invitado', {
+    body: { codigo_qr: codigoQr },
+  })
+
+  const url = data?.url ?? null
+
+  if (error || !url) return null
+
+  cacheUrlsInvitado.set(codigoQr, { url, expira: Date.now() + TTL_CACHE })
+  return url
 }

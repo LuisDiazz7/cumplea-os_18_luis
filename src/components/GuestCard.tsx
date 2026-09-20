@@ -14,7 +14,7 @@ export default function GuestCard({ dato, onEliminar }: GuestCardProps) {
 
   return (
     <article className={estaAdentro ? 'tarjeta-invitado tarjeta-invitado--adentro' : 'tarjeta-invitado'}>
-      <Avatar foto={invitado.foto} nombre={invitado.nombre} tamano={52} />
+      <Avatar foto={invitado.foto} codigoQr={invitado.codigo_qr} nombre={invitado.nombre} tamano={52} />
 
       <div className="tarjeta-invitado__cuerpo">
         <h3 className="tarjeta-invitado__nombre">{invitado.nombre}</h3>

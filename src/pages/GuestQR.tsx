@@ -103,7 +103,7 @@ export default function GuestQR() {
     <div className="qr-vista">
       <header className="qr-perfil">
         <div className="qr-perfil__avatar" aria-hidden="true">
-          <Avatar foto={invitado.foto} nombre={invitado.nombre} tamano={122} />
+          <Avatar foto={invitado.foto} codigoQr={invitado.codigo_qr} nombre={invitado.nombre} tamano={122} />
         </div>
         <h1 className="qr-perfil__nombre">{invitado.nombre}</h1>
         <p className="qr-perfil__invitado">¡Estás invitado!</p>
